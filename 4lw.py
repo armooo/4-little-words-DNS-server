@@ -1,7 +1,11 @@
 #!/usr/bin/python
+import sys
+import getopt
+
 from twisted.names import dns
 from twisted.names import common
 from twisted.names import server
+from twisted.names import authority
 
 from twisted.internet import defer, reactor
 from twisted.python import failure
@@ -14,7 +18,7 @@ class FourLittleWordsAuthority(common.ResolverBase):
         common.ResolverBase.__init__(self)
 
     def _lookup(self, name, cls, type, timeout = None):
-        
+
         if type != dns.A:
             return defer.fail(failure.Failure(dns.AuthoritativeDomainError(name)))
 
@@ -29,11 +33,37 @@ class FourLittleWordsAuthority(common.ResolverBase):
 
         return defer.succeed((results, [], []))
 
-def main():
-    dns_factory = server.DNSServerFactory(verbose=True, authorities=[FourLittleWordsAuthority()])
+def main(pyzones):
+
+    authorities=[]
+    for pyzone in pyzones:
+        authorities.append(authority.PySourceAuthority(pyzone))
+    authorities.append(FourLittleWordsAuthority())
+
+    dns_factory = server.DNSServerFactory(verbose=True, authorities=authorities)
     dns_protocol = dns.DNSDatagramProtocol(dns_factory)
     reactor.listenUDP(53, dns_protocol)
     reactor.run()
 
+def usage():
+    print '4lw.py [-z <pyzone file>]'
+    print 'The pyzone format can be seen at '\
+    'http://twistedmatrix.com/documents/current/names/howto/names.html#auto1'
+
 if __name__ == '__main__':
-    main()
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'hz:')
+    except getopt.GetoptError, err:
+        print str(err)
+        usage()
+        sys.exit(2)
+
+    pyzones = []
+
+    for o, a in opts:
+        if o == '-h':
+            usage()
+            sys.exit(1)
+        elif o == '-z':
+
+    main(pyzones)
