@@ -1,0 +1,43 @@
+$def with ()
+<html>
+    <head>
+        <title>4lw - 4 little words</title>
+        <script
+            type="text/javascript"
+            src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js">
+        </script>
+        <script
+            type="text/javascript"
+            src="/static/convert.js">
+        </script>
+    </head>
+    <body>
+        <p>
+            Four little words is an ip address mnemonic system for ip addresses
+            without standard DNS entries. It started of on
+            <a href="http://blog.rabidgremlin.com/2010/11/28/4-little-words/">
+            rabidgremli's</a> blog and
+            <a href="http://www.reddit.com/r/technology/comments/ecllk/the_4_little_word_protocol_4lw_for_remembering/"/>
+            reddit</a>.
+        </p>
+        <p>
+            <h3>API</h3>
+            <pre>
+                GET http://4lw.org/convert/192.168.1.1
+
+                {
+                    "ip":"192.168.1.1",
+                    "4lw":"regular.play.acts.actor.4lw.org",
+                    "address":"192.168.1.1"
+                }
+            </pre>
+        </p>
+
+        <p>
+            <h3>Service<h3>
+            <input type="textbox" name="address" id="address"/>
+            <input type="submit" value="Convert" onclick="convert_address()"/></br>
+            <input type="textbox" name="4lw" id="4lw" disabled="True" size="25"/></br>
+        </p>
+    </body>
+</html>
