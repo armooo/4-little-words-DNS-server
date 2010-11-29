@@ -33,14 +33,35 @@ class FourLittleWordsAuthority(common.ResolverBase):
 
         return defer.succeed((results, [], []))
 
+class AuthoritativeDomainErrorAsDomainError(common.ResolverBase):
+    def __init__(self, resolver):
+        common.ResolverBase.__init__(self)
+        self.resolver = resolver
+
+    def _check_for_empty(self, f, name):
+        f.trap(dns.AuthoritativeDomainError)
+        return failure.Failure(dns.DomainError(name))
+
+    def _lookup(self, name, cls, type, timeout):
+        q = dns.Query(name, type, cls)
+        d = self.resolver.query(q, timeout)
+        d = d.addErrback(self._check_for_empty, name)
+        return d
+
 def main(pyzones):
 
-    authorities=[]
+    authorities = []
     for pyzone in pyzones:
-        authorities.append(authority.PySourceAuthority(pyzone))
+        a = authority.PySourceAuthority(pyzone)
+        # We have 2 authorities for the same zone. The ResolverChain will stop
+        # at the first AuthoritativeDomainError, because the authoritative
+        # zone could not find the record. But we have 2 authoritative zones so
+        # we need to trick it to keep going.
+        a = AuthoritativeDomainErrorAsDomainError(a)
+        authorities.append(a)
     authorities.append(FourLittleWordsAuthority())
 
-    dns_factory = server.DNSServerFactory(verbose=True, authorities=authorities)
+    dns_factory = server.DNSServerFactory(authorities=authorities)
     dns_protocol = dns.DNSDatagramProtocol(dns_factory)
     reactor.listenUDP(53, dns_protocol)
     reactor.run()
